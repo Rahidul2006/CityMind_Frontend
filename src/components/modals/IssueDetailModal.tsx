@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { PriorityIssueItem, MapMarker, AlertItem, IssueStatus } from '../../types/dashboard';
-import { X, MapPin, Clock, ShieldAlert, CheckCircle2, UserPlus, AlertCircle } from 'lucide-react';
+import { X, MapPin, Clock, ShieldAlert, CheckCircle2, UserPlus } from 'lucide-react';
 
 interface IssueDetailModalProps {
   issue: PriorityIssueItem | MapMarker | AlertItem | null;

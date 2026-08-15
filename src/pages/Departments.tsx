@@ -20,14 +20,8 @@ import {
   Wrench, 
   Car, 
   AlertTriangle,
-  UserCheck,
   Download,
-  Filter,
   Check,
-  TrendingUp,
-  ArrowRight,
-  Eye,
-  Sliders
 } from 'lucide-react';
 
 export interface DepartmentItem {
