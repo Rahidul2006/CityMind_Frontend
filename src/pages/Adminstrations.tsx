@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Shield, Users, Server, Bell, Key, Save } from 'lucide-react';
+import { Users, Server, Save } from 'lucide-react';
 
 export const Adminstrations: React.FC = () => {
   const [aiThreshold, setAiThreshold] = useState(85);

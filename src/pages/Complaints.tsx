@@ -3,12 +3,9 @@ import { useOutletContext } from 'react-router-dom';
 import { 
   Search, 
   Filter, 
-  AlertCircle, 
-  CheckCircle2, 
   Clock, 
   ChevronRight,
   SlidersHorizontal,
-  Building2,
   MapPin
 } from 'lucide-react';
 import { PRIORITY_ISSUES, MAP_MARKERS } from '../data/dashboardData';
