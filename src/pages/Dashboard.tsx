@@ -1,4 +1,3 @@
-import React from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { MetricsGrid } from '../components/dashboard/MetricsGrid';
 import { LiveCityMap } from '../components/dashboard/LiveCityMap';

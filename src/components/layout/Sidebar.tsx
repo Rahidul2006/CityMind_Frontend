@@ -28,7 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const location = useLocation();
 
   const navItems = [
-    { path: '/', label: 'Overview', icon: LayoutDashboard },
+    { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
     { path: '/complaints', label: 'Complaints', icon: MessageSquare },
     { path: '/departments', label: 'Departments', icon: Building2 },
     { path: '/analytics', label: 'Analytics', icon: PieChart },
@@ -54,7 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div>
           {/* Header Branding */}
           <div className="flex items-center justify-between px-5 py-5 border-b border-slate-800/60">
-            <Link to="/" className="flex items-center gap-3 group">
+            <Link to="/dashboard" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
                 <Hexagon className="w-6 h-6 text-white stroke-[2.2]" />
               </div>
@@ -113,6 +113,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-3 border-t border-slate-800/60 relative">
           {profileOpen && (
             <div className="absolute bottom-full left-3 right-3 mb-2 bg-[#14203e] border border-slate-700/60 rounded-xl shadow-xl p-2 z-10 animate-in fade-in slide-in-from-bottom-2">
+              <Link 
+                to="/" 
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:bg-slate-700/50 rounded-lg"
+                onClick={() => setProfileOpen(false)}
+              >
+                <Hexagon className="w-3.5 h-3.5 text-blue-400" />
+                <span>Landing Page</span>
+              </Link>
               <button className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-200 hover:bg-slate-700/50 rounded-lg">
                 <UserCheck className="w-3.5 h-3.5 text-blue-400" />
                 <span>Profile Settings</span>
@@ -122,10 +130,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span>Preferences</span>
               </button>
               <div className="my-1 border-t border-slate-700/40" />
-              <button className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg">
+              <Link 
+                to="/login" 
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg"
+                onClick={() => setProfileOpen(false)}
+              >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Sign Out</span>
-              </button>
+              </Link>
             </div>
           )}
 

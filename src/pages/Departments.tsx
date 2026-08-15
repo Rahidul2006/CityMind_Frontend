@@ -1,6 +1,5 @@
 import React from 'react';
-import { Building2, Users, CheckCircle, Clock, ArrowUpRight } from 'lucide-react';
-import { DEPARTMENT_DATA } from '../data/dashboardData';
+import { Building2, ArrowUpRight } from 'lucide-react';
 
 export const Departments: React.FC = () => {
   const departmentsDetail = [
