@@ -12,7 +12,8 @@ import {
   Hexagon,
   UserCheck,
   LogOut,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Wallet
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -31,6 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
     { path: '/complaints', label: 'Complaints', icon: MessageSquare },
     { path: '/departments', label: 'Departments', icon: Building2 },
+    { path: '/budget', label: 'Budget & Resources', icon: Wallet },
     { path: '/analytics', label: 'Analytics', icon: PieChart },
     { path: '/alerts', label: 'Alerts', icon: Bell },
     { path: '/administration', label: 'Administration', icon: Settings },

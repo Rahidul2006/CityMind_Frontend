@@ -7,6 +7,7 @@ import Departments from './pages/Departments';
 import Analytics from './pages/Analytics';
 import Alarts from './pages/Alarts';
 import Adminstrations from './pages/Adminstrations';
+import Budget from './pages/Budget';
 
 export function App() {
   return (
@@ -21,7 +22,8 @@ export function App() {
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/alerts" element={<Alarts />} />
         <Route path="/administration" element={<Adminstrations />} />
-      </Route>
+        <Route path="/budget" element={<Budget />} />
+</Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
