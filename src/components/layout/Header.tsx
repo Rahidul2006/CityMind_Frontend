@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Calendar, Bell, Settings, ChevronDown, Menu } from 'lucide-react';
 import { NotificationsModal } from '../modals/NotificationsModal';
 import { DateRangeModal } from '../modals/DateRangeModal';
@@ -20,6 +21,44 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const location = useLocation();
+
+  const getHeaderTitle = () => {
+    switch (location.pathname) {
+      case '/departments':
+        return {
+          title: 'Departments',
+          subtitle: 'Manage departments, track performance and workload'
+        };
+      case '/complaints':
+        return {
+          title: 'Complaints',
+          subtitle: 'Track and resolve municipal complaints'
+        };
+      case '/analytics':
+        return {
+          title: 'Analytics',
+          subtitle: 'Municipal performance & data insights'
+        };
+      case '/alerts':
+        return {
+          title: 'Alerts',
+          subtitle: 'Real-time system & emergency alerts'
+        };
+      case '/administration':
+        return {
+          title: 'Administration',
+          subtitle: 'Manage system settings & staff'
+        };
+      default:
+        return {
+          title: 'Overview Dashboard',
+          subtitle: 'Welcome back, Admin Officer'
+        };
+    }
+  };
+
+  const headerMeta = getHeaderTitle();
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 lg:px-8 py-4">
@@ -38,10 +77,10 @@ export const Header: React.FC<HeaderProps> = ({
           )}
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-tight">
-              Overview Dashboard
+              {headerMeta.title}
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 font-medium">
-              Welcome back, Admin Officer
+              {headerMeta.subtitle}
             </p>
           </div>
         </div>
