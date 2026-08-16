@@ -30,6 +30,11 @@ export const Header: React.FC<HeaderProps> = ({
           title: 'Departments',
           subtitle: 'Manage departments, track performance and workload'
         };
+      case '/budget':
+        return {
+          title: 'Budget & Resources',
+          subtitle: 'Track budgets, expenditures, and resource utilization across departments'
+        };
       case '/complaints':
         return {
           title: 'Complaints',

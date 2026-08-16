@@ -7,6 +7,7 @@ import Departments from './pages/Departments';
 import Analytics from './pages/Analytics';
 import Alarts from './pages/Alarts';
 import Adminstrations from './pages/Adminstrations';
+import Budget from './pages/Budget';
 
 const ProtectedRoute = () => {
   const token = localStorage.getItem('token');
@@ -32,6 +33,7 @@ export function App() {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/alerts" element={<Alarts />} />
           <Route path="/administration" element={<Adminstrations />} />
+          <Route path="/budget" element={<Budget />} />
         </Route>
       </Route>
 
