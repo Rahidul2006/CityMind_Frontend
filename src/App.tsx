@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
@@ -9,21 +9,34 @@ import Alarts from './pages/Alarts';
 import Adminstrations from './pages/Adminstrations';
 import Budget from './pages/Budget';
 
+const ProtectedRoute = () => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
+};
+
 export function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LandingPage initialShowLogin={true} />} />
-      
-      <Route element={<Layout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/complaints" element={<Complaints />} />
-        <Route path="/departments" element={<Departments />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/alerts" element={<Alarts />} />
-        <Route path="/administration" element={<Adminstrations />} />
-        <Route path="/budget" element={<Budget />} />
-</Route>
+
+      <Route element={<ProtectedRoute />}>
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/complaints" element={<Complaints />} />
+          <Route path="/departments" element={<Departments />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/alerts" element={<Alarts />} />
+          <Route path="/administration" element={<Adminstrations />} />
+          <Route path="/budget" element={<Budget />} />
+        </Route>
+      </Route>
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

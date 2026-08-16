@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   MessageSquare,  
@@ -27,6 +27,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const navItems = [
     { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -132,14 +135,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span>Preferences</span>
               </button>
               <div className="my-1 border-t border-slate-700/40" />
-              <Link 
-                to="/login" 
+              <button 
                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg"
-                onClick={() => setProfileOpen(false)}
+                onClick={async () => {
+                  setProfileOpen(false);
+                  try {
+                    await fetch(`${API_BASE_URL}/api/auth/logout`, { method: 'POST' });
+                  } catch (error) {
+                    console.error('Logout failed:', error);
+                  }
+                  localStorage.removeItem('token');
+                  navigate('/');
+                }}
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Sign Out</span>
-              </Link>
+              </button>
             </div>
           )}
 
