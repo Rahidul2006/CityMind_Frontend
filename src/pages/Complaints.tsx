@@ -9,6 +9,7 @@ import {
   MapPin
 } from 'lucide-react';
 import type { PriorityIssueItem, MapMarker, AlertItem } from '../types/dashboard';
+import { subscribeToStatusUpdates } from '../services/socketService';
 
 interface OutletContextType {
   setActiveModalIssue: (issue: PriorityIssueItem | MapMarker | AlertItem | null) => void;
@@ -37,6 +38,7 @@ export const Complaints: React.FC = () => {
           const rawComplaints = json.data || json.complaints || [];
           const mappedData = rawComplaints.map((c: any) => ({
             id: c._id || c.complaintId || String(Math.random()),
+            complaintId: c.complaintId || c._id,
             title: c.title || c.category || c.description?.substring(0, 35) || 'Civic Issue Report',
             category: c.category || 'General',
             location: c.address || (typeof c.location === 'string' ? c.location : c.location?.address) || 'Captured GPS Location',
@@ -45,6 +47,7 @@ export const Complaints: React.FC = () => {
             estRepairTime: c.estimatedRepairHours ? `${c.estimatedRepairHours} hrs` : '24 hrs',
             severity: c.severity || c.aiAnalysis?.severity || 'Medium',
             status: c.status || 'SUBMITTED',
+            statusHistory: c.statusHistory || [],
             score: c.score || 0,
             description: c.description || '',
             imageUrl: c.image?.url || c.imageUrl || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=300&q=80'
@@ -56,6 +59,33 @@ export const Complaints: React.FC = () => {
       }
     };
     fetchComplaints();
+
+    // Real-time status update subscription
+    const unsubscribe = subscribeToStatusUpdates((data) => {
+      if (data && (data.complaintId || data.mongoId)) {
+        const targetId = data.complaintId || data.mongoId;
+        console.log('[SOCKET] Complaints Page live update for:', targetId, data.status);
+        setComplaintsList((prevList) =>
+          prevList.map((item) => {
+            if (item.id === targetId || item.complaintId === targetId || item.id === data.mongoId) {
+              return {
+                ...item,
+                status: data.status,
+                statusHistory: data.complaint?.statusHistory || [
+                  ...(item.statusHistory || []),
+                  data.statusHistoryEntry
+                ].filter(Boolean),
+              };
+            }
+            return item;
+          })
+        );
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const filteredComplaints = complaintsList.filter(item => {

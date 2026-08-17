@@ -23,13 +23,11 @@ import {
   Droplet, 
   Waves, 
   Recycle, 
-  ArrowRight,
-  Search,
-  Filter
+  ArrowRight
 } from 'lucide-react';
 
 export const Budget: React.FC = () => {
-  const [selectedDateRange, setSelectedDateRange] = useState('May 13 – May 20, 2025');
+  const [selectedDateRange] = useState('May 13 – May 20, 2025');
   const [showReportModal, setShowReportModal] = useState(false);
   const [activeModal, setActiveModal] = useState<'expenditures' | 'alerts' | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
