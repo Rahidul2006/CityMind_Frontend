@@ -94,6 +94,12 @@ export const Complaints: React.FC = () => {
     const targetId = item.id || item.complaintId;
     if (!targetId) return;
 
+    const statusUpper = (item.status || '').toUpperCase();
+    if (statusUpper !== 'RESOLVED') {
+      alert(`Cannot delete complaint. Only resolved issues can be deleted (Current status: ${item.status}).`);
+      return;
+    }
+
     const confirmDelete = window.confirm(
       `Are you sure you want to delete complaint "${item.title || targetId}"?\n\nThis will permanently delete the complaint record from the database.`
     );

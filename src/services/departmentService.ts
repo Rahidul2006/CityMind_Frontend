@@ -98,16 +98,27 @@ export const toggleDepartmentStatus = async (id: string, isActive: boolean) => {
   return json.data as DepartmentData;
 };
 
+const parseJsonResponse = async (res: Response, defaultErrorMsg: string) => {
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    const json = await res.json();
+    if (!res.ok || (json.success !== undefined && !json.success)) {
+      throw new Error(json.message || defaultErrorMsg);
+    }
+    return json;
+  }
+  if (!res.ok) {
+    throw new Error(`Server returned HTTP ${res.status}. Please ensure backend server is running on ${API_BASE_URL}.`);
+  }
+  return { success: true };
+};
+
 export const deleteDepartment = async (id: string) => {
   const res = await fetch(`${API_BASE_URL}/api/departments/${id}`, {
     method: 'DELETE',
     headers: getHeaders(),
   });
-  const json = await res.json();
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || 'Failed to delete department.');
-  }
-  return json;
+  return await parseJsonResponse(res, 'Failed to delete department.');
 };
 
 export const getDepartmentComplaints = async (id: string, params?: { status?: string; search?: string }) => {
@@ -116,19 +127,13 @@ export const getDepartmentComplaints = async (id: string, params?: { status?: st
   if (params?.search) url.searchParams.append('search', params.search);
 
   const res = await fetch(url.toString(), { headers: getHeaders() });
-  const json = await res.json();
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || 'Failed to fetch department complaints.');
-  }
+  const json = await parseJsonResponse(res, 'Failed to fetch department complaints.');
   return json.data as any[];
 };
 
 export const getDepartmentStats = async (id: string) => {
   const res = await fetch(`${API_BASE_URL}/api/departments/${id}/stats`, { headers: getHeaders() });
-  const json = await res.json();
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || 'Failed to fetch department stats.');
-  }
+  const json = await parseJsonResponse(res, 'Failed to fetch department stats.');
   return json.data as any;
 };
 
@@ -138,10 +143,7 @@ export const getUnassignedComplaints = async (params?: { search?: string; catego
   if (params?.category) url.searchParams.append('category', params.category);
 
   const res = await fetch(url.toString(), { headers: getHeaders() });
-  const json = await res.json();
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || 'Failed to fetch unassigned complaints.');
-  }
+  const json = await parseJsonResponse(res, 'Failed to fetch unassigned complaints.');
   return json.data as any[];
 };
 
@@ -151,10 +153,7 @@ export const assignComplaintToDepartment = async (complaintId: string, departmen
     headers: getHeaders(),
     body: JSON.stringify({ departmentId, reason: reason || '' }),
   });
-  const json = await res.json();
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || 'Failed to assign complaint to department.');
-  }
+  const json = await parseJsonResponse(res, 'Failed to assign complaint to department.');
   return json.data as any;
 };
 
@@ -163,9 +162,5 @@ export const deleteComplaint = async (id: string) => {
     method: 'DELETE',
     headers: getHeaders(),
   });
-  const json = await res.json();
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || 'Failed to delete complaint.');
-  }
-  return json;
+  return await parseJsonResponse(res, 'Failed to delete complaint.');
 };
