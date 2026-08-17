@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { PriorityIssueItem, MapMarker, AlertItem } from '../../types/dashboard';
-import { X, MapPin, Clock, ShieldAlert, CheckCircle2, UserPlus, AlertTriangle } from 'lucide-react';
+import { X, MapPin, Clock, ShieldAlert, CheckCircle2, UserPlus, AlertTriangle, Trash2 } from 'lucide-react';
 import { joinComplaintRoom, leaveComplaintRoom, subscribeToStatusUpdates } from '../../services/socketService';
 
 interface IssueDetailModalProps {
@@ -107,6 +107,34 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issue, onClo
       setFeedbackMsg({ type: 'error', text: 'Unable to update complaint status. Server connection error.' });
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteComplaint = async () => {
+    if (!complaintId) return;
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete complaint "${title || complaintId}"?\n\nThis will permanently delete the complaint record from the database.`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const targetId = (issue as any).complaintId || (issue as any).id || (issue as any)._id;
+      const res = await fetch(`${API_BASE_URL}/api/complaints/${targetId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        onClose();
+        window.location.reload();
+      } else {
+        alert(json.message || 'Failed to delete complaint');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete complaint');
     }
   };
 
@@ -246,17 +274,28 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issue, onClo
 
         {/* Footer Actions */}
         <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
-          <button
-            onClick={() => setAssigned(!assigned)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors ${
-              assigned 
-                ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' 
-                : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
-            }`}
-          >
-            {assigned ? <CheckCircle2 className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-            {assigned ? 'Assigned to Unit A' : 'Assign Officer'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setAssigned(!assigned)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                assigned 
+                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' 
+                  : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
+              }`}
+            >
+              {assigned ? <CheckCircle2 className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+              {assigned ? 'Assigned to Unit A' : 'Assign Officer'}
+            </button>
+
+            <button
+              onClick={handleDeleteComplaint}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold rounded-xl transition-colors"
+              title="Delete Complaint from Database"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Delete</span>
+            </button>
+          </div>
 
           <button
             onClick={onClose}

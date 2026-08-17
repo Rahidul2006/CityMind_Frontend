@@ -157,3 +157,15 @@ export const assignComplaintToDepartment = async (complaintId: string, departmen
   }
   return json.data as any;
 };
+
+export const deleteComplaint = async (id: string) => {
+  const res = await fetch(`${API_BASE_URL}/api/complaints/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || 'Failed to delete complaint.');
+  }
+  return json;
+};

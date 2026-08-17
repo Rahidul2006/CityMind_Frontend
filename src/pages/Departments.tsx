@@ -29,6 +29,7 @@ import {
   createDepartment,
   updateDepartment,
   toggleDepartmentStatus,
+  deleteDepartment,
   getDepartmentById,
   getDepartmentComplaints,
   getUnassignedComplaints,
@@ -310,6 +311,25 @@ export const Departments: React.FC = () => {
       loadDepartmentsData();
     } catch (err: any) {
       showToast(err.message || 'Unable to update department status.', 'error');
+    }
+  };
+
+  // Delete Department Handler
+  const handleDeleteDepartment = async (dept: DepartmentData) => {
+    const deptId = dept.id || dept._id;
+    if (!deptId) return;
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete department "${dept.name}"?\n\nThis will permanently remove the department, its officer user accounts, and unassign any related complaints in the database.`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await deleteDepartment(deptId);
+      showToast(`Department "${dept.name}" deleted successfully.`);
+      loadDepartmentsData();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete department.', 'error');
     }
   };
 
@@ -635,6 +655,13 @@ export const Departments: React.FC = () => {
                           title={dept.isActive ? 'Deactivate Department' : 'Activate Department'}
                         >
                           <Power className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDepartment(dept)}
+                          className="p-1.5 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                          title="Delete Department"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
