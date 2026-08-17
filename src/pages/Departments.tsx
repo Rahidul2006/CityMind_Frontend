@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
   Trash2, 
@@ -43,137 +43,49 @@ export interface DepartmentItem {
   workloadPct: number;
 }
 
-const INITIAL_DEPARTMENTS: DepartmentItem[] = [
-  {
-    id: 'dept-1',
-    name: 'Roads & Transport',
-    head: 'Er. Rajesh Varma',
-    teams: 14,
-    assigned: 352,
-    active: 198,
-    resolved: 132,
-    overdue: 12,
-    avgResolutionTime: '2.1 days',
-    avgHours: 50.4,
-    slaCompliance: 87,
-    budget: '$420,000',
-    color: '#f97316', // Orange
-    badgeBg: 'bg-orange-500',
-    iconName: 'car',
-    workloadPct: 27.4
-  },
-  {
-    id: 'dept-2',
-    name: 'Sanitation',
-    head: 'Anita Desai',
-    teams: 22,
-    assigned: 268,
-    active: 172,
-    resolved: 96,
-    overdue: 8,
-    avgResolutionTime: '1.8 days',
-    avgHours: 43.2,
-    slaCompliance: 76,
-    budget: '$380,000',
-    color: '#10b981', // Green
-    badgeBg: 'bg-emerald-500',
-    iconName: 'trash',
-    workloadPct: 20.9
-  },
-  {
-    id: 'dept-3',
-    name: 'Electrical',
-    head: 'Suresh Kumar',
-    teams: 9,
-    assigned: 214,
-    active: 128,
-    resolved: 80,
-    overdue: 6,
-    avgResolutionTime: '2.6 days',
-    avgHours: 62.4,
-    slaCompliance: 82,
-    budget: '$210,000',
-    color: '#f59e0b', // Yellow / Amber
-    badgeBg: 'bg-amber-500',
-    iconName: 'zap',
-    workloadPct: 16.7
-  },
-  {
-    id: 'dept-4',
-    name: 'Water Supply',
-    head: 'Dr. Mohan Lal',
-    teams: 16,
-    assigned: 156,
-    active: 96,
-    resolved: 58,
-    overdue: 4,
-    avgResolutionTime: '2.3 days',
-    avgHours: 55.2,
-    slaCompliance: 74,
-    budget: '$510,000',
-    color: '#3b82f6', // Blue
-    badgeBg: 'bg-blue-500',
-    iconName: 'droplet',
-    workloadPct: 12.2
-  },
-  {
-    id: 'dept-5',
-    name: 'Drainage',
-    head: 'Priya Sharma',
-    teams: 11,
-    assigned: 184,
-    active: 112,
-    resolved: 64,
-    overdue: 10,
-    avgResolutionTime: '2.9 days',
-    avgHours: 69.6,
-    slaCompliance: 71,
-    budget: '$290,000',
-    color: '#a855f7', // Purple
-    badgeBg: 'bg-purple-500',
-    iconName: 'waves',
-    workloadPct: 14.3
-  },
-  {
-    id: 'dept-6',
-    name: 'Waste Management',
-    head: 'Vikram Singh',
-    teams: 18,
-    assigned: 110,
-    active: 68,
-    resolved: 40,
-    overdue: 2,
-    avgResolutionTime: '1.9 days',
-    avgHours: 45.6,
-    slaCompliance: 88,
-    budget: '$340,000',
-    color: '#14b8a6', // Teal
-    badgeBg: 'bg-teal-500',
-    iconName: 'recycle',
-    workloadPct: 8.6
-  },
-  {
-    id: 'dept-7',
-    name: 'Public Works',
-    head: 'Rohan Mehta',
-    teams: 8,
-    assigned: 92,
-    active: 68,
-    resolved: 24,
-    overdue: 0,
-    avgResolutionTime: '2.2 days',
-    avgHours: 52.8,
-    slaCompliance: 83,
-    budget: '$270,000',
-    color: '#ec4899', // Pink
-    badgeBg: 'bg-pink-500',
-    iconName: 'wrench',
-    workloadPct: 0
-  }
-];
+const INITIAL_DEPARTMENTS: DepartmentItem[] = [];
 
 export const Departments: React.FC = () => {
   const [departments, setDepartments] = useState<DepartmentItem[]>(INITIAL_DEPARTMENTS);
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_BASE_URL}/api/departments/overview`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const json = await res.json();
+        if (json.success) {
+          const mappedData = json.data.map((d: any) => ({
+            id: d._id || d.id,
+            name: d.name,
+            head: d.head?.name || d.head || 'Unassigned',
+            teams: d.teams || 0,
+            assigned: d.stats?.assigned || d.assigned || 0,
+            active: d.stats?.active || d.active || 0,
+            resolved: d.stats?.resolved || d.resolved || 0,
+            overdue: d.stats?.overdue || d.overdue || 0,
+            avgResolutionTime: d.stats?.avgResolutionTime || d.avgResolutionTime || 'N/A',
+            avgHours: d.stats?.avgHours || d.avgHours || 0,
+            slaCompliance: d.stats?.slaCompliance || d.slaCompliance || 0,
+            budget: d.budget?.amount ? `${d.budget.currency || '$'}${d.budget.amount}` : '$0',
+            color: d.color || '#3b82f6',
+            badgeBg: d.badgeBg || 'bg-blue-500',
+            iconName: d.iconName || 'building',
+            workloadPct: d.stats?.workloadPct || d.workloadPct || 0
+          }));
+          setDepartments(mappedData);
+        }
+      } catch (err) {
+        console.error("Failed to fetch departments", err);
+      }
+    };
+    fetchDepartments();
+  }, []);
   const [filterDepartment, setFilterDepartment] = useState<string>('All');
   const [performanceMetric, setPerformanceMetric] = useState<'sla' | 'time' | 'resolved' | 'active'>('sla');
   
