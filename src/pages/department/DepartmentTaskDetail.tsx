@@ -7,12 +7,9 @@ import {
   CheckCircle2,
   AlertTriangle,
   Send,
-  Upload,
   Sparkles,
-  ShieldCheck,
   RefreshCw,
   MessageSquare,
-  FileImage,
   Check
 } from 'lucide-react';
 import {
@@ -161,8 +158,6 @@ export const DepartmentTaskDetail: React.FC = () => {
   const complaintIdStr = task.complaintId || task._id;
   const priorityStr = (task.aiAnalysis?.severity || task.priority || task.severity || 'MEDIUM').toUpperCase();
   const imageUrl = task.image?.url || task.image?.cloudinaryUrl || task.imageUrl || '';
-  const lat = task.reportedLocation?.latitude || task.image?.latitude || task.location?.coordinates?.[1] || 0;
-  const lng = task.reportedLocation?.longitude || task.image?.longitude || task.location?.coordinates?.[0] || 0;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">

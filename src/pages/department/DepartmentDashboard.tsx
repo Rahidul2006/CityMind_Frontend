@@ -7,11 +7,8 @@ import {
   AlertTriangle,
   ArrowRight,
   RefreshCw,
-  Building2,
-  ShieldCheck,
   Eye,
-  MapPin,
-  Sparkles
+  MapPin
 } from 'lucide-react';
 import { getDepartmentDashboard } from '../../services/departmentTaskService';
 
@@ -19,7 +16,7 @@ export const DepartmentDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Eye, RefreshCw, Calendar, MapPin } from 'lucide-react';
+import { CheckCircle2, Eye, RefreshCw, MapPin } from 'lucide-react';
 import { getResolvedTasks } from '../../services/departmentTaskService';
 
 export const DepartmentResolved: React.FC = () => {
