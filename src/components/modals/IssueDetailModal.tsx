@@ -4,7 +4,6 @@ import { X, MapPin, Clock, ShieldAlert, CheckCircle2, UserPlus, AlertTriangle, T
 import { joinComplaintRoom, leaveComplaintRoom, subscribeToStatusUpdates } from '../../services/socketService';
 import { API_BASE_URL } from '../../config/api';
 
-
 interface IssueDetailModalProps {
   issue: PriorityIssueItem | MapMarker | AlertItem | null;
   onClose: () => void;
@@ -112,27 +111,23 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issue, onClo
 
   const handleDeleteComplaint = async () => {
     if (!complaintId) return;
+
+    const statusUpper = (currentStatus || (issue as any)?.status || '').toUpperCase();
+    if (statusUpper !== 'RESOLVED') {
+      alert(`Cannot delete complaint. Only resolved issues can be deleted (Current status: ${currentStatus || (issue as any)?.status}).`);
+      return;
+    }
+
     const confirmDelete = window.confirm(
       `Are you sure you want to delete complaint "${title || complaintId}"?\n\nThis will permanently delete the complaint record from the database.`
     );
     if (!confirmDelete) return;
 
     try {
-      const token = localStorage.getItem('token');
       const targetId = (issue as any).complaintId || (issue as any).id || (issue as any)._id;
-      const res = await fetch(`${API_BASE_URL}/api/complaints/${targetId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const json = await res.json();
-      if (res.ok && json.success) {
-        onClose();
-        window.location.reload();
-      } else {
-        alert(json.message || 'Failed to delete complaint');
-      }
+      await deleteComplaint(targetId);
+      onClose();
+      window.location.reload();
     } catch (err: any) {
       alert(err.message || 'Failed to delete complaint');
     }
