@@ -1,12 +1,11 @@
 import { io, Socket } from 'socket.io-client';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { SOCKET_URL } from '../config/api';
 
 let socket: Socket | null = null;
 
 export const getSocket = (): Socket => {
   if (!socket) {
-    socket = io(API_BASE_URL, {
+    socket = io(SOCKET_URL, {
       autoConnect: true,
       transports: ['websocket', 'polling'],
     });

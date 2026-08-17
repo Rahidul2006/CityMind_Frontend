@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { API_BASE_URL } from '../config/api';
+
 import { 
   Search, 
   Filter, 
@@ -24,7 +26,7 @@ export const Complaints: React.FC = () => {
   const [selectedSeverity, setSelectedSeverity] = useState('All');
 
   const [complaintsList, setComplaintsList] = useState<any[]>([]);
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 
   useEffect(() => {
     const fetchComplaints = async () => {

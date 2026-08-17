@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config/api';
+
 import { 
   LayoutDashboard, 
   MessageSquare,  
@@ -28,8 +30,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const navItems = [
     { path: '/dashboard', label: 'Overview', icon: LayoutDashboard },
