@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { PriorityIssueItem, MapMarker, AlertItem } from '../../types/dashboard';
 import { X, MapPin, Clock, ShieldAlert, CheckCircle2, UserPlus, AlertTriangle, Trash2 } from 'lucide-react';
 import { joinComplaintRoom, leaveComplaintRoom, subscribeToStatusUpdates } from '../../services/socketService';
-import { deleteComplaint } from '../../services/departmentService';
+import { API_BASE_URL } from '../../config/api';
 
 interface IssueDetailModalProps {
   issue: PriorityIssueItem | MapMarker | AlertItem | null;
@@ -28,8 +28,6 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issue, onClo
   const [statusHistory, setStatusHistory] = useState<any[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const complaintId = issue ? (issue as any).id || (issue as any).complaintId || (issue as any)._id : null;
 
