@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, RefreshCw, Eye, Building2 } from 'lucide-react';
+import { MapPin, RefreshCw, Eye } from 'lucide-react';
 import { getDepartmentMapTasks } from '../../services/departmentTaskService';
 
 export const DepartmentMap: React.FC = () => {

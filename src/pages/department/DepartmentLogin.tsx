@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Shield, Lock, Mail, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Building2, Shield, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
 import { departmentLogin } from '../../services/departmentTaskService';
 
 export const DepartmentLogin: React.FC = () => {

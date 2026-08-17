@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { User, Building2, Mail, Phone, MapPin, ShieldCheck, Lock, Calendar } from 'lucide-react';
+import { Building2, ShieldCheck, Lock } from 'lucide-react';
 import { getDepartmentProfile } from '../../services/departmentTaskService';
 
 export const DepartmentProfile: React.FC = () => {
   const [profileData, setProfileData] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     const loadProfile = async () => {

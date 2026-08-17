@@ -9,10 +9,8 @@ import {
   CheckCircle2,
   User,
   LogOut,
-  Bell,
   Menu,
   X,
-  ChevronRight,
   ShieldCheck
 } from 'lucide-react';
 

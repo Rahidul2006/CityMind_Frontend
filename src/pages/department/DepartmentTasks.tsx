@@ -5,10 +5,7 @@ import {
   Search,
   RefreshCw,
   MapPin,
-  Eye,
-  Filter,
-  ArrowRight,
-  AlertTriangle
+  Eye
 } from 'lucide-react';
 import { getDepartmentTasks } from '../../services/departmentTaskService';
 
@@ -18,13 +15,13 @@ export const DepartmentTasks: React.FC = () => {
 
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'All');
   const [priorityFilter, setPriorityFilter] = useState('All');
-  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [categoryFilter] = useState('All');
 
   const loadTasks = useCallback(async () => {
     setLoading(true);

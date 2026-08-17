@@ -6,8 +6,6 @@ import {
   CheckCircle2, 
   Clock, 
   Plus, 
-  FileText, 
-  Settings, 
   X, 
   Zap, 
   Droplet, 
@@ -24,15 +22,13 @@ import {
   Power,
   Sparkles,
   ArrowRight,
-  MapPin,
-  Tag
+  MapPin
 } from 'lucide-react';
 import {
   getDepartments,
   createDepartment,
   updateDepartment,
   toggleDepartmentStatus,
-  deleteDepartment,
   getDepartmentById,
   getDepartmentComplaints,
   getUnassignedComplaints,
