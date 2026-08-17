@@ -6,10 +6,12 @@ import {
   Clock, 
   ChevronRight,
   SlidersHorizontal,
-  MapPin
+  MapPin,
+  Trash2
 } from 'lucide-react';
 import type { PriorityIssueItem, MapMarker, AlertItem } from '../types/dashboard';
 import { subscribeToStatusUpdates } from '../services/socketService';
+import { deleteComplaint } from '../services/departmentService';
 
 interface OutletContextType {
   setActiveModalIssue: (issue: PriorityIssueItem | MapMarker | AlertItem | null) => void;
@@ -87,6 +89,23 @@ export const Complaints: React.FC = () => {
       unsubscribe();
     };
   }, []);
+
+  const handleDeleteComplaint = async (item: any) => {
+    const targetId = item.id || item.complaintId;
+    if (!targetId) return;
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete complaint "${item.title || targetId}"?\n\nThis will permanently delete the complaint record from the database.`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await deleteComplaint(targetId);
+      setComplaintsList((prevList) => prevList.filter((c) => c.id !== item.id && c.complaintId !== targetId));
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete complaint');
+    }
+  };
 
   const filteredComplaints = complaintsList.filter(item => {
     const title = (item.title || '').toLowerCase();
@@ -245,16 +264,28 @@ export const Complaints: React.FC = () => {
                       </div>
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveModalIssue(item as any);
-                        }}
-                        className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors font-bold inline-flex items-center gap-1 text-xs"
-                      >
-                        <span>View</span>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveModalIssue(item as any);
+                          }}
+                          className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors font-bold inline-flex items-center gap-1 text-xs"
+                        >
+                          <span>View</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteComplaint(item);
+                          }}
+                          className="p-1.5 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                          title="Delete Complaint"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
