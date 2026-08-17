@@ -34,19 +34,20 @@ export const Complaints: React.FC = () => {
         });
         const json = await res.json();
         if (json.success) {
-          const mappedData = json.data.map((c: any) => ({
-            id: c._id,
-            title: c.title,
-            category: c.category,
-            location: c.location?.address || 'Unknown location',
-            ward: c.location?.ward || 'Unknown ward',
-            reportedTime: new Date(c.reportedAt).toLocaleDateString(),
-            estRepairTime: c.estimatedRepairHours ? `${c.estimatedRepairHours} hrs` : 'N/A',
-            severity: c.severity,
-            status: c.status,
-            score: c.score,
-            description: c.description,
-            imageUrl: c.imageUrl || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=300&q=80'
+          const rawComplaints = json.data || json.complaints || [];
+          const mappedData = rawComplaints.map((c: any) => ({
+            id: c._id || c.complaintId || String(Math.random()),
+            title: c.title || c.category || c.description?.substring(0, 35) || 'Civic Issue Report',
+            category: c.category || 'General',
+            location: c.address || (typeof c.location === 'string' ? c.location : c.location?.address) || 'Captured GPS Location',
+            ward: c.location?.ward || 'Municipal Ward',
+            reportedTime: new Date(c.reportedAt || c.createdAt || Date.now()).toLocaleDateString(),
+            estRepairTime: c.estimatedRepairHours ? `${c.estimatedRepairHours} hrs` : '24 hrs',
+            severity: c.severity || c.aiAnalysis?.severity || 'Medium',
+            status: c.status || 'SUBMITTED',
+            score: c.score || 0,
+            description: c.description || '',
+            imageUrl: c.image?.url || c.imageUrl || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=300&q=80'
           }));
           setComplaintsList(mappedData);
         }
@@ -58,9 +59,12 @@ export const Complaints: React.FC = () => {
   }, []);
 
   const filteredComplaints = complaintsList.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const title = (item.title || '').toLowerCase();
+    const location = (item.location || '').toLowerCase();
+    const category = (item.category || '').toLowerCase();
+    const search = searchTerm.toLowerCase();
+
+    const matchesSearch = title.includes(search) || location.includes(search) || category.includes(search);
     const matchesStatus = selectedStatus === 'All' || item.status === selectedStatus;
     const matchesSeverity = selectedSeverity === 'All' || item.severity === selectedSeverity;
     return matchesSearch && matchesStatus && matchesSeverity;
@@ -84,7 +88,7 @@ export const Complaints: React.FC = () => {
           <div className="bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-xl text-center">
             <span className="text-xs font-semibold text-amber-600 block">Active Critical</span>
             <span className="text-lg font-bold text-amber-900">
-              {complaintsList.filter(c => c.severity === 'Critical').length}
+              {complaintsList.filter(c => (c.severity || '').toLowerCase() === 'critical' || (c.severity || '').toLowerCase() === 'high').length}
             </span>
           </div>
         </div>
@@ -115,11 +119,12 @@ export const Complaints: React.FC = () => {
               className="bg-transparent focus:outline-none font-bold text-blue-600 cursor-pointer"
             >
               <option value="All">All Statuses</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Reported">Reported</option>
-              <option value="AI Verified">AI Verified</option>
-              <option value="Assigned">Assigned</option>
-              <option value="Resolved">Resolved</option>
+              <option value="SUBMITTED">Submitted</option>
+              <option value="VERIFIED">Verified</option>
+              <option value="ASSIGNED">Assigned</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="RESOLVED">Resolved</option>
+              <option value="REOPENED">Reopened</option>
             </select>
           </div>
 
@@ -133,9 +138,9 @@ export const Complaints: React.FC = () => {
             >
               <option value="All">All Severities</option>
               <option value="Critical">Critical</option>
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
             </select>
           </div>
         </div>
@@ -186,9 +191,9 @@ export const Complaints: React.FC = () => {
                     </td>
                     <td className="py-3.5 px-4">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[11px] ${
-                        item.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                        item.status === 'In Progress' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                        item.status === 'AI Verified' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
+                        item.status === 'RESOLVED' || item.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        item.status === 'IN_PROGRESS' || item.status === 'In Progress' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                        item.status === 'REOPENED' ? 'bg-orange-50 text-orange-700 border border-orange-200' :
                         'bg-blue-50 text-blue-700 border border-blue-200'
                       }`}>
                         {item.status}
@@ -196,9 +201,8 @@ export const Complaints: React.FC = () => {
                     </td>
                     <td className="py-3.5 px-4">
                       <span className={`px-2 py-0.5 rounded font-bold uppercase text-[10px] ${
-                        item.severity === 'Critical' ? 'bg-red-100 text-red-700' :
-                        item.severity === 'High' ? 'bg-orange-100 text-orange-700' :
-                        item.severity === 'Medium' ? 'bg-amber-100 text-amber-700' :
+                        item.severity === 'Critical' || item.severity === 'CRITICAL' ? 'bg-red-100 text-red-700' :
+                        item.severity === 'High' || item.severity === 'HIGH' ? 'bg-orange-100 text-orange-700' :
                         'bg-slate-100 text-slate-700'
                       }`}>
                         {item.severity}
