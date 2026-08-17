@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import type { PriorityIssueItem, MapMarker, AlertItem } from '../../types/dashboard';
 import { X, MapPin, Clock, ShieldAlert, CheckCircle2, UserPlus, AlertTriangle, Trash2 } from 'lucide-react';
 import { joinComplaintRoom, leaveComplaintRoom, subscribeToStatusUpdates } from '../../services/socketService';
+import { deleteComplaint } from '../../services/departmentService';
 import { API_BASE_URL } from '../../config/api';
+
 
 interface IssueDetailModalProps {
   issue: PriorityIssueItem | MapMarker | AlertItem | null;
