@@ -126,10 +126,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ initialShowLogin = fal
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('userData', JSON.stringify(data.user));
+      if (data.user?.role) {
+        localStorage.setItem('userRole', (data.user.role || '').toUpperCase());
+      }
+      if (data.user?.departmentId) {
+        localStorage.setItem('departmentId', data.user.departmentId);
+      }
 
       setLoginSuccessMsg(true);
       setTimeout(() => {
-        navigate('/dashboard');
+        const role = (data.user?.role || '').toUpperCase();
+        if (role === 'DEPARTMENT_OFFICER' || role === 'OFFICER' || data.user?.departmentId) {
+          navigate('/department/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       }, 700);
     } catch (error: any) {
       alert(error.message || 'Authentication failed. Please try again.');

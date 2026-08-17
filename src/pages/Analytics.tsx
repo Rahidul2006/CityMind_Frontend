@@ -14,10 +14,7 @@ import {
   MapPin, 
   X, 
   Check, 
-  Info,
-  SlidersHorizontal,
-  PieChart,
-  BarChart3
+  Info
 } from 'lucide-react';
 
 export const Analytics: React.FC = () => {
@@ -60,9 +57,6 @@ export const Analytics: React.FC = () => {
 
   // Static / Dynamic Data Arrays based on filters
   const dateLabels = ['May 13', 'May 14', 'May 15', 'May 16', 'May 17', 'May 18', 'May 19', 'May 20'];
-  const reportedTrendData = [800, 1300, 1450, 1550, 1850, 1600, 1950, 2200];
-  const resolvedTrendData = [300, 600, 900, 1100, 1350, 1050, 1200, 1500];
-  const overdueTrendData = [80, 100, 120, 130, 140, 150, 160, 180];
 
   // Map Hotspots Data
   const mapHotspots = [
