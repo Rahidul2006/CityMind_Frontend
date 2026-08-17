@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { 
   Search, 
@@ -8,7 +8,6 @@ import {
   SlidersHorizontal,
   MapPin
 } from 'lucide-react';
-import { PRIORITY_ISSUES, MAP_MARKERS } from '../data/dashboardData';
 import type { PriorityIssueItem, MapMarker, AlertItem } from '../types/dashboard';
 
 interface OutletContextType {
@@ -21,37 +20,42 @@ export const Complaints: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedSeverity, setSelectedSeverity] = useState('All');
 
-  // Combine issues into a rich complaints list
-  const complaintsList = [
-    ...PRIORITY_ISSUES.map(p => ({
-      id: p.id,
-      title: p.title,
-      category: p.category,
-      location: p.location,
-      ward: p.ward,
-      reportedTime: p.reportedTime,
-      estRepairTime: p.estRepairTime,
-      severity: p.severity,
-      status: 'In Progress',
-      score: p.score,
-      description: p.description,
-      imageUrl: p.imageUrl
-    })),
-    ...MAP_MARKERS.map(m => ({
-      id: m.id,
-      title: m.title,
-      category: m.category,
-      location: `${m.ward}, City Zone`,
-      ward: m.ward,
-      reportedTime: '2 hrs ago',
-      estRepairTime: '24 hrs',
-      severity: m.severity,
-      status: m.status,
-      score: 82,
-      description: `Reported ${m.category.toLowerCase()} issue requiring municipal field team dispatch.`,
-      imageUrl: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=300&q=80'
-    }))
-  ];
+  const [complaintsList, setComplaintsList] = useState<any[]>([]);
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  useEffect(() => {
+    const fetchComplaints = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_BASE_URL}/api/complaints`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const json = await res.json();
+        if (json.success) {
+          const mappedData = json.data.map((c: any) => ({
+            id: c._id,
+            title: c.title,
+            category: c.category,
+            location: c.location?.address || 'Unknown location',
+            ward: c.location?.ward || 'Unknown ward',
+            reportedTime: new Date(c.reportedAt).toLocaleDateString(),
+            estRepairTime: c.estimatedRepairHours ? `${c.estimatedRepairHours} hrs` : 'N/A',
+            severity: c.severity,
+            status: c.status,
+            score: c.score,
+            description: c.description,
+            imageUrl: c.imageUrl || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=300&q=80'
+          }));
+          setComplaintsList(mappedData);
+        }
+      } catch (err) {
+        console.error("Failed to fetch complaints", err);
+      }
+    };
+    fetchComplaints();
+  }, []);
 
   const filteredComplaints = complaintsList.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
