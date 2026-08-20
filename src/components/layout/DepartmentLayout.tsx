@@ -39,8 +39,8 @@ export const DepartmentLayout: React.FC = () => {
   const navItems = [
     { to: '/department/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/department/tasks', label: 'Assigned Tasks', icon: ClipboardList },
+    { to: '/department/map', label: 'Live Task Map', icon: MapPin },
     { to: '/department/priority', label: 'Priority Issues', icon: AlertTriangle },
-    { to: '/department/map', label: 'Map View', icon: MapPin },
     { to: '/department/resolved', label: 'Resolved Tasks', icon: CheckCircle2 },
     { to: '/department/profile', label: 'Profile', icon: User },
   ];
