@@ -260,17 +260,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issue, onClo
                 </select>
               </div>
 
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-slate-700">Status Update Message / Note:</label>
-                <textarea
-                  value={adminMessage}
-                  onChange={(e) => setAdminMessage(e.target.value)}
-                  placeholder="Provide details about repair progress, officer assignment, or resolution..."
-                  rows={2}
-                  disabled={isUpdating}
-                  className="w-full bg-white border border-slate-300 rounded-xl p-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                />
-              </div>
+              
 
               <button
                 onClick={() => setShowConfirm(true)}
