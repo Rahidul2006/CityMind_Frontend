@@ -71,6 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const isHideRightControls = 
     isDashboardPage ||
+    location.pathname === '/analytics' ||
     location.pathname === '/departments' || 
     location.pathname === '/complaints' || 
     location.pathname.startsWith('/department');
