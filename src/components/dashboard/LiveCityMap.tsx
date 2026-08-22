@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { 
   Plus, 
   Minus, 
@@ -20,12 +22,26 @@ interface LiveCityMapProps {
   onSelectMarker: (marker: MapMarker) => void;
 }
 
+const categoryConfigs: { 
+  id: IssueCategory; 
+  label: string; 
+  color: string; 
+  bg: string; 
+  icon: React.ElementType; 
+}[] = [
+  { id: 'Potholes', label: 'Potholes', color: '#ef4444', bg: 'bg-red-500', icon: AlertCircle },
+  { id: 'Garbage Overflow', label: 'Garbage Overflow', color: '#f97316', bg: 'bg-orange-500', icon: Trash2 },
+  { id: 'Broken Streetlights', label: 'Broken Streetlights', color: '#eab308', bg: 'bg-amber-400', icon: Lightbulb },
+  { id: 'Water Leakage', label: 'Water Leakage', color: '#3b82f6', bg: 'bg-blue-500', icon: Droplet },
+  { id: 'Drain Blockage', label: 'Drain Blockage', color: '#a855f7', bg: 'bg-purple-500', icon: GitCommit },
+  { id: 'Road Cracks', label: 'Road Cracks', color: '#14b8a6', bg: 'bg-teal-500', icon: Layers },
+  { id: 'Others', label: 'Others', color: '#64748b', bg: 'bg-slate-500', icon: MapPin },
+];
+
 export const LiveCityMap: React.FC<LiveCityMapProps> = ({ markers, onSelectMarker }) => {
   const [selectedWard, setSelectedWard] = useState('All Wards');
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [hoveredMarker, setHoveredMarker] = useState<MapMarker | null>(null);
+  const [assignmentFilter, setAssignmentFilter] = useState<'All' | 'Unassigned' | 'Assigned'>('All');
 
-  // Active filter states for category checkboxes
   const [activeCategories, setActiveCategories] = useState<Record<IssueCategory, boolean>>({
     'Potholes': true,
     'Garbage Overflow': true,
@@ -36,188 +52,267 @@ export const LiveCityMap: React.FC<LiveCityMapProps> = ({ markers, onSelectMarke
     'Others': true,
   });
 
-  const categoryConfigs: { 
-    id: IssueCategory; 
-    label: string; 
-    color: string; 
-    bg: string; 
-    border: string; 
-    icon: React.ElementType; 
-  }[] = [
-    { id: 'Potholes', label: 'Potholes', color: '#ef4444', bg: 'bg-red-500', border: 'border-red-600', icon: AlertCircle },
-    { id: 'Garbage Overflow', label: 'Garbage Overflow', color: '#f97316', bg: 'bg-orange-500', border: 'border-orange-600', icon: Trash2 },
-    { id: 'Broken Streetlights', label: 'Broken Streetlights', color: '#eab308', bg: 'bg-amber-400', border: 'border-amber-500', icon: Lightbulb },
-    { id: 'Water Leakage', label: 'Water Leakage', color: '#3b82f6', bg: 'bg-blue-500', border: 'border-blue-600', icon: Droplet },
-    { id: 'Drain Blockage', label: 'Drain Blockage', color: '#a855f7', bg: 'bg-purple-500', border: 'border-purple-600', icon: GitCommit },
-    { id: 'Road Cracks', label: 'Road Cracks', color: '#14b8a6', bg: 'bg-teal-500', border: 'border-teal-600', icon: Layers },
-    { id: 'Others', label: 'Others', color: '#64748b', bg: 'bg-slate-500', border: 'border-slate-600', icon: MapPin },
-  ];
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersGroupRef = useRef<L.LayerGroup | null>(null);
+
+  // Extract unique wards dynamically from markers
+  const availableWards = useMemo(() => {
+    const wardsSet = new Set<string>();
+    markers.forEach((m) => {
+      if (m.ward) wardsSet.add(m.ward);
+    });
+    return Array.from(wardsSet);
+  }, [markers]);
 
   const toggleCategory = (cat: IssueCategory) => {
     setActiveCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
   };
 
-  const filteredMarkers = markers.filter(m => {
-    const matchesCategory = activeCategories[m.category];
-    const matchesWard = selectedWard === 'All Wards' || m.ward === selectedWard;
-    return matchesCategory && matchesWard;
-  });
-
-  const getMarkerIcon = (category: IssueCategory) => {
-    const config = categoryConfigs.find(c => c.id === category);
-    return config ? config.icon : MapPin;
+  const handleSelectAllCategories = (selectAll: boolean) => {
+    const updated: Record<IssueCategory, boolean> = {
+      'Potholes': selectAll,
+      'Garbage Overflow': selectAll,
+      'Broken Streetlights': selectAll,
+      'Water Leakage': selectAll,
+      'Drain Blockage': selectAll,
+      'Road Cracks': selectAll,
+      'Others': selectAll,
+    };
+    setActiveCategories(updated);
   };
 
-  const getMarkerBg = (category: IssueCategory) => {
-    const config = categoryConfigs.find(c => c.id === category);
-    return config ? config.bg : 'bg-slate-500';
+  const filteredMarkers = useMemo(() => {
+    return markers.filter(m => {
+      const matchesCategory = activeCategories[m.category] === true;
+      const matchesWard = selectedWard === 'All Wards' || m.ward === selectedWard;
+      const matchesAssignment = 
+        assignmentFilter === 'All' ? true :
+        assignmentFilter === 'Unassigned' ? !m.isAssigned :
+        Boolean(m.isAssigned);
+
+      return matchesCategory && matchesWard && matchesAssignment;
+    });
+  }, [markers, activeCategories, selectedWard, assignmentFilter]);
+
+  // Initialize Leaflet Map
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    if (!mapInstanceRef.current) {
+      const map = L.map(mapContainerRef.current, {
+        center: [19.0760, 72.8777],
+        zoom: 12,
+        zoomControl: false,
+      });
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      markersGroupRef.current = L.layerGroup().addTo(map);
+      mapInstanceRef.current = map;
+    }
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  // Update Leaflet Markers whenever filteredMarkers change
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const markersGroup = markersGroupRef.current;
+    if (!map || !markersGroup) return;
+
+    markersGroup.clearLayers();
+
+    const bounds: L.LatLngExpression[] = [];
+
+    filteredMarkers.forEach((marker) => {
+      if (typeof marker.lat !== 'number' || typeof marker.lng !== 'number') return;
+      if (isNaN(marker.lat) || isNaN(marker.lng)) return;
+
+      const isResolved = marker.status === 'Resolved' || (marker.status as string) === 'RESOLVED';
+      const isUnassigned = !marker.isAssigned && !isResolved;
+
+      // Color coding:
+      // RED (#dc2626) for Unassigned issue
+      // BLUE (#2563eb) for Assigned / In Progress issue
+      // GREEN (#16a34a) for Resolved issue
+      const pinColor = isUnassigned ? '#dc2626' : isResolved ? '#16a34a' : '#2563eb';
+      const isCritical = marker.severity === 'Critical' || (marker.severity as string) === 'HIGH';
+
+      // SVG teardrop pin marker
+      const iconHtml = `
+        <div class="relative ${isUnassigned ? 'marker-pulse' : ''}" style="cursor: pointer;">
+          <svg width="32" height="38" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 3px 6px rgba(0,0,0,0.35));">
+            <path d="M12 0C5.37 0 0 5.37 0 12C0 21 12 30 12 30C12 30 24 21 24 12C24 5.37 18.63 0 12 0Z" fill="${pinColor}" stroke="#FFFFFF" stroke-width="1.8"/>
+            <circle cx="12" cy="11" r="5" fill="#FFFFFF"/>
+            <circle cx="12" cy="11" r="3" fill="${pinColor}"/>
+          </svg>
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: 'custom-leaflet-pin',
+        iconSize: [32, 38],
+        iconAnchor: [16, 38],
+        popupAnchor: [0, -36],
+      });
+
+      const leafletMarker = L.marker([marker.lat, marker.lng], { icon: customIcon });
+
+      const popupContent = document.createElement('div');
+      popupContent.className = 'p-1 cursor-pointer';
+      popupContent.innerHTML = `
+        <div style="font-family: Inter, system-ui, sans-serif; min-width: 160px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px;">
+            <span style="font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; color: #ffffff; background: ${pinColor}; text-transform: uppercase;">
+              ${isUnassigned ? '🔴 Unassigned' : isResolved ? '🟢 Resolved' : '🔵 Assigned'}
+            </span>
+            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; background: ${isCritical ? '#fee2e2' : '#fef3c7'}; color: ${isCritical ? '#991b1b' : '#92400e'}; padding: 2px 6px; border-radius: 4px;">${marker.severity}</span>
+          </div>
+          <h4 style="margin: 4px 0 2px 0; font-weight: 700; font-size: 13px; color: #0f172a;">${marker.title}</h4>
+          <p style="margin: 0 0 6px 0; font-size: 11px; color: #64748b;">${marker.ward || 'Municipal Ward'}</p>
+          <span style="display: inline-block; font-size: 10px; font-weight: 700; background: #eff6ff; color: #1d4ed8; padding: 2px 6px; border-radius: 4px;">${marker.category}</span>
+        </div>
+      `;
+
+      popupContent.addEventListener('click', () => {
+        onSelectMarker(marker);
+      });
+
+      leafletMarker.bindPopup(popupContent);
+
+      leafletMarker.on('click', () => {
+        onSelectMarker(marker);
+      });
+
+      markersGroup.addLayer(leafletMarker);
+      bounds.push([marker.lat, marker.lng]);
+    });
+
+    if (bounds.length > 0) {
+      map.fitBounds(L.latLngBounds(bounds), { padding: [50, 50], maxZoom: 15 });
+    }
+  }, [filteredMarkers, onSelectMarker]);
+
+  const handleZoomIn = () => {
+    mapInstanceRef.current?.zoomIn();
   };
+
+  const handleZoomOut = () => {
+    mapInstanceRef.current?.zoomOut();
+  };
+
+  const handleRecenter = () => {
+    if (!mapInstanceRef.current || filteredMarkers.length === 0) return;
+    const bounds: L.LatLngExpression[] = filteredMarkers
+      .filter(m => typeof m.lat === 'number' && typeof m.lng === 'number')
+      .map(m => [m.lat, m.lng]);
+    if (bounds.length > 0) {
+      mapInstanceRef.current.fitBounds(L.latLngBounds(bounds), { padding: [50, 50] });
+    }
+  };
+
+  const isAllSelected = Object.values(activeCategories).every(Boolean);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-4 sm:p-5 flex flex-col h-full">
-      {/* Map Top Header */}
-      <div className="flex items-center justify-between gap-3 mb-4">
+      {/* Map Top Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-base sm:text-lg font-bold text-slate-900">Live City Map</h2>
-          <span className="bg-blue-50 text-blue-700 text-xs font-semibold px-2 py-0.5 rounded-full border border-blue-200">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900">Live City Map (OpenStreetMap)</h2>
+          <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-blue-200">
             {filteredMarkers.length} Active Pins
           </span>
         </div>
 
-        {/* Ward Selector Dropdown */}
-        <div className="relative">
-          <select
-            value={selectedWard}
-            onChange={(e) => setSelectedWard(e.target.value)}
-            className="appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 pr-8 text-xs font-semibold text-slate-700 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          >
-            <option value="All Wards">All Wards</option>
-            <option value="Ward 14">Ward 14 (MG Road)</option>
-            <option value="Ward 8">Ward 8 (Park St)</option>
-            <option value="Ward 5">Ward 5 (Market Area)</option>
-            <option value="Ward 12">Ward 12 (Varma St)</option>
-            <option value="Ward 3">Ward 3 (Lake View)</option>
-          </select>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        {/* Assignment Filter Tabs & Ward Dropdown */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Assignment Filter Tabs */}
+          <div className="flex bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs font-bold">
+            <button
+              onClick={() => setAssignmentFilter('All')}
+              className={`px-2.5 py-1 rounded-lg transition-colors ${assignmentFilter === 'All' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setAssignmentFilter('Unassigned')}
+              className={`px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 ${assignmentFilter === 'Unassigned' ? 'bg-red-600 text-white shadow-2xs' : 'text-red-600 hover:bg-red-50'}`}
+            >
+              <span className="w-2 h-2 rounded-full bg-red-400"></span>
+              Unassigned
+            </button>
+            <button
+              onClick={() => setAssignmentFilter('Assigned')}
+              className={`px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 ${assignmentFilter === 'Assigned' ? 'bg-blue-600 text-white shadow-2xs' : 'text-blue-600 hover:bg-blue-50'}`}
+            >
+              <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+              Assigned
+            </button>
+          </div>
+
+          {/* Ward Selector Dropdown */}
+          <div className="relative">
+            <select
+              value={selectedWard}
+              onChange={(e) => setSelectedWard(e.target.value)}
+              className="appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 pr-8 text-xs font-semibold text-slate-700 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            >
+              <option value="All Wards">All Wards</option>
+              {availableWards.map((w) => (
+                <option key={w} value={w}>{w}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
         </div>
       </div>
 
       {/* Map Viewport Container */}
-      <div className="relative flex-1 min-h-[380px] bg-[#eef3f7] rounded-xl border border-slate-200 overflow-hidden select-none">
-        {/* Vector Map Canvas Background */}
-        <div 
-          className="absolute inset-0 transition-transform duration-300 ease-out origin-center"
-          style={{ transform: `scale(${zoomLevel})` }}
-        >
-          {/* Map Base Vector Grid & Features */}
-          <svg className="w-full h-full text-slate-300" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e2e8f0" strokeWidth="1" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="#f1f5f9" />
-            <rect width="100%" height="100%" fill="url(#grid)" />
+      <div className="relative flex-1 min-h-[380px] rounded-xl border border-slate-200 overflow-hidden select-none">
+        <div ref={mapContainerRef} className="w-full h-full min-h-[380px] z-0" />
 
-            {/* Green Parks & Land Blocks */}
-            <path d="M 80 40 Q 200 60 260 140 T 320 220 L 100 220 Z" fill="#dcfce7" opacity="0.7" />
-            <path d="M 380 120 Q 500 130 550 200 L 400 280 Z" fill="#dcfce7" opacity="0.7" />
-            <path d="M 120 280 Q 220 320 300 360 L 150 390 Z" fill="#dcfce7" opacity="0.7" />
+        {/* Filter Overlay Drawer on Left Side */}
+        <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-xl p-3 shadow-lg w-52 z-10">
+          <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
+            <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+              <span>Filter Issues</span>
+              <Info className="w-3.5 h-3.5 text-slate-400" />
+            </h3>
 
-            {/* River / Waterbody */}
-            <path d="M -10 320 Q 250 290 400 340 T 800 320 L 800 420 L -10 420 Z" fill="#bae6fd" opacity="0.8" />
-            <path d="M 0 320 Q 250 290 400 340 T 800 320" fill="none" stroke="#38bdf8" strokeWidth="6" opacity="0.6" />
+            {/* Select All / Clear Toggle */}
+            <button
+              onClick={() => handleSelectAllCategories(!isAllSelected)}
+              className="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              {isAllSelected ? 'Deselect All' : 'Select All'}
+            </button>
+          </div>
 
-            {/* Road Networks */}
-            {/* Major Arterial Roads */}
-            <path d="M 50 -10 L 450 420" stroke="#ffffff" strokeWidth="12" fill="none" />
-            <path d="M 50 -10 L 450 420" stroke="#cbd5e1" strokeWidth="8" fill="none" />
-
-            <path d="M -10 180 Q 300 120 750 180" stroke="#ffffff" strokeWidth="10" fill="none" />
-            <path d="M -10 180 Q 300 120 750 180" stroke="#cbd5e1" strokeWidth="6" fill="none" />
-
-            <path d="M 280 -10 L 280 420" stroke="#ffffff" strokeWidth="8" fill="none" />
-            <path d="M 280 -10 L 280 420" stroke="#e2e8f0" strokeWidth="5" fill="none" />
-
-            <path d="M 580 -10 L 580 420" stroke="#ffffff" strokeWidth="8" fill="none" />
-            <path d="M 580 -10 L 580 420" stroke="#e2e8f0" strokeWidth="5" fill="none" />
-
-            {/* Secondary Roads */}
-            <path d="M 100 80 L 650 80" stroke="#ffffff" strokeWidth="6" strokeDasharray="6,4" />
-            <path d="M 100 240 L 650 240" stroke="#ffffff" strokeWidth="6" strokeDasharray="6,4" />
-          </svg>
-
-          {/* Map Location Labels */}
-          <span className="absolute top-12 left-1/3 text-[11px] font-bold text-slate-400 tracking-wider uppercase pointer-events-none">North City</span>
-          <span className="absolute top-20 left-1/2 text-[11px] font-bold text-emerald-700/60 bg-emerald-100/50 px-2 py-0.5 rounded pointer-events-none">Central Park</span>
-          <span className="absolute top-28 left-2/3 text-[11px] font-bold text-emerald-700/60 bg-emerald-100/50 px-2 py-0.5 rounded pointer-events-none">Green Hills</span>
-          <span className="absolute top-24 left-1/4 text-[10px] font-semibold text-slate-400 pointer-events-none">Lake End</span>
-          <span className="absolute top-1/2 left-8 text-[10px] font-semibold text-slate-400 pointer-events-none">West End</span>
-          <span className="absolute top-1/2 left-24 text-[10px] font-semibold text-slate-400 pointer-events-none">West Park</span>
-          <span className="absolute bottom-24 left-1/3 text-[11px] font-bold text-emerald-700/60 bg-emerald-100/50 px-2 py-0.5 rounded pointer-events-none">Baker Park</span>
-          <span className="absolute bottom-20 left-1/2 text-[11px] font-bold text-slate-500 bg-white/70 px-2 py-0.5 rounded pointer-events-none">Tech Park</span>
-          <span className="absolute bottom-12 right-1/3 text-[11px] font-bold text-slate-500 pointer-events-none">South Point</span>
-          <span className="absolute top-1/2 right-1/4 text-[11px] font-bold text-slate-500 pointer-events-none">Tower Side</span>
-
-          {/* Interactive Pin Markers */}
-          {filteredMarkers.map((marker) => {
-            const Icon = getMarkerIcon(marker.category);
-            const bgClass = getMarkerBg(marker.category);
-            const isCritical = marker.severity === 'Critical';
-
-            return (
-              <div
-                key={marker.id}
-                style={{ top: `${marker.lat}%`, left: `${marker.lng}%` }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-10 hover:z-30 transition-transform duration-150 hover:scale-125"
-                onClick={() => onSelectMarker(marker)}
-                onMouseEnter={() => setHoveredMarker(marker)}
-                onMouseLeave={() => setHoveredMarker(null)}
-              >
-                <div className={`relative flex items-center justify-center w-7 h-7 rounded-full text-white shadow-md ${bgClass} border-2 border-white ${isCritical ? 'marker-pulse' : ''}`}>
-                  <Icon className="w-3.5 h-3.5" />
-                </div>
-
-                {/* Tooltip on Hover */}
-                {hoveredMarker?.id === marker.id && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 text-white rounded-xl p-2.5 shadow-xl text-xs z-40 pointer-events-none animate-in fade-in zoom-in-95">
-                    <p className="font-bold truncate">{marker.title}</p>
-                    <div className="flex items-center justify-between mt-1 text-[10px] text-slate-300">
-                      <span>{marker.ward}</span>
-                      <span className={`px-1.5 py-0.5 rounded font-bold uppercase ${
-                        marker.severity === 'Critical' ? 'bg-red-500/30 text-red-300' :
-                        marker.severity === 'High' ? 'bg-orange-500/30 text-orange-300' : 'bg-yellow-500/30 text-yellow-300'
-                      }`}>
-                        {marker.severity}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Filter Overlay Drawer on Left Side of Map */}
-        <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-xl p-3 shadow-lg w-48 z-20">
-          <h3 className="text-xs font-bold text-slate-900 mb-2.5 pb-1 border-b border-slate-100 flex items-center justify-between">
-            <span>Filter Issues</span>
-            <Info className="w-3.5 h-3.5 text-slate-400" />
-          </h3>
+          {/* Category Checkboxes */}
           <div className="space-y-1.5">
             {categoryConfigs.map((cat) => {
               const Icon = cat.icon;
-              const isChecked = activeCategories[cat.id];
+              const isChecked = activeCategories[cat.id] === true;
               return (
                 <label
                   key={cat.id}
-                  className="flex items-center gap-2 text-[11px] font-semibold text-slate-700 cursor-pointer hover:text-slate-900 select-none"
+                  className="flex items-center gap-2 text-[11px] font-semibold text-slate-700 cursor-pointer hover:text-slate-900 select-none p-0.5 rounded hover:bg-slate-50 transition-colors"
                 >
                   <input
                     type="checkbox"
                     checked={isChecked}
                     onChange={() => toggleCategory(cat.id)}
-                    className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 accent-blue-600"
+                    className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
                   />
                   <div className={`w-4 h-4 rounded-full ${cat.bg} text-white flex items-center justify-center shrink-0`}>
                     <Icon className="w-2.5 h-2.5" />
@@ -227,26 +322,42 @@ export const LiveCityMap: React.FC<LiveCityMapProps> = ({ markers, onSelectMarke
               );
             })}
           </div>
+
+          {/* Marker Color Legend Box */}
+          <div className="mt-3 pt-2 border-t border-slate-100 text-[10px] space-y-1 font-bold">
+            <div className="flex items-center gap-1.5 text-slate-700">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-600 inline-block shadow-2xs"></span>
+              <span>🔴 Unassigned Issue (Red)</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-700">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block shadow-2xs"></span>
+              <span>🔵 Assigned Issue (Blue)</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-700">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block shadow-2xs"></span>
+              <span>🟢 Resolved Issue (Green)</span>
+            </div>
+          </div>
         </div>
 
-        {/* Zoom Controls on Top Right of Map */}
-        <div className="absolute top-3 right-3 flex flex-col bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden z-20">
+        {/* Zoom Controls on Top Right */}
+        <div className="absolute top-3 right-3 flex flex-col bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden z-10">
           <button
-            onClick={() => setZoomLevel(prev => Math.min(prev + 0.25, 2))}
+            onClick={handleZoomIn}
             className="p-2 hover:bg-slate-100 text-slate-700 transition-colors border-b border-slate-100"
             title="Zoom In"
           >
             <Plus className="w-4 h-4" />
           </button>
           <button
-            onClick={() => setZoomLevel(prev => Math.max(prev - 0.25, 0.75))}
+            onClick={handleZoomOut}
             className="p-2 hover:bg-slate-100 text-slate-700 transition-colors border-b border-slate-100"
             title="Zoom Out"
           >
             <Minus className="w-4 h-4" />
           </button>
           <button
-            onClick={() => setZoomLevel(1)}
+            onClick={handleRecenter}
             className="p-2 hover:bg-slate-100 text-slate-700 transition-colors"
             title="Recenter Map"
           >

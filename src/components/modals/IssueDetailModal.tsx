@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import type { PriorityIssueItem, MapMarker, AlertItem } from '../../types/dashboard';
 import { X, MapPin, Clock, ShieldAlert, CheckCircle2, UserPlus, AlertTriangle, Trash2 } from 'lucide-react';
 import { joinComplaintRoom, leaveComplaintRoom, subscribeToStatusUpdates } from '../../services/socketService';
@@ -8,6 +9,7 @@ import { API_BASE_URL } from '../../config/api';
 interface IssueDetailModalProps {
   issue: PriorityIssueItem | MapMarker | AlertItem | null;
   onClose: () => void;
+  readOnly?: boolean;
 }
 
 const VALID_STATUSES = [
@@ -20,7 +22,11 @@ const VALID_STATUSES = [
   'REJECTED',
 ];
 
-export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issue, onClose }) => {
+export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issue, onClose, readOnly }) => {
+  const location = useLocation();
+  const isDashboardPage = location.pathname === '/dashboard' || location.pathname === '/';
+  const isReadOnly = Boolean(readOnly || isDashboardPage);
+
   const [currentStatus, setCurrentStatus] = useState<string>('SUBMITTED');
   const [selectedStatus, setSelectedStatus] = useState<string>('SUBMITTED');
   const [adminMessage, setAdminMessage] = useState<string>('');
@@ -29,6 +35,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issue, onClo
   const [statusHistory, setStatusHistory] = useState<any[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [fullData, setFullData] = useState<any>(null);
 
   const complaintId = issue ? (issue as any).id || (issue as any).complaintId || (issue as any)._id : null;
 
@@ -41,6 +48,29 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issue, onClo
     setStatusHistory((issue as any).statusHistory || []);
 
     if (complaintId) {
+      // Fetch full complaint document from backend to ensure real image, description, address are loaded
+      const token = localStorage.getItem('token');
+      fetch(`${API_BASE_URL}/api/complaints/${complaintId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.success && (json.data || json.complaint)) {
+            const data = json.data || json.complaint;
+            setFullData(data);
+            if (data.status) {
+              setCurrentStatus(data.status);
+              setSelectedStatus(data.status);
+            }
+            if (data.statusHistory) {
+              setStatusHistory(data.statusHistory);
+            }
+          }
+        })
+        .catch((err) => console.error('Failed to fetch modal complaint details:', err));
+
       joinComplaintRoom(complaintId);
 
       const unsubscribe = subscribeToStatusUpdates((data) => {
@@ -65,12 +95,15 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issue, onClo
 
   if (!issue) return null;
 
-  const title = (issue as PriorityIssueItem).title || (issue as MapMarker).title || (issue as AlertItem).title;
-  const ward = (issue as PriorityIssueItem).ward || (issue as MapMarker).ward || 'Ward 14';
-  const category = (issue as PriorityIssueItem).category || (issue as MapMarker).category || 'Pothole';
-  const description = (issue as PriorityIssueItem).description || (issue as AlertItem).description || 'Civic issue report requiring municipal action.';
-  const severity = (issue as PriorityIssueItem).severity || (issue as MapMarker).severity || 'Critical';
-  const imageUrl = (issue as PriorityIssueItem).imageUrl || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=600&q=80';
+  const title = fullData?.title || (issue as PriorityIssueItem).title || (issue as MapMarker).title || (issue as AlertItem).title || 'Civic Issue Report';
+  const ward = fullData?.address || (issue as PriorityIssueItem).ward || (issue as MapMarker).ward || (issue as any).location || 'Municipal Location';
+  const category = fullData?.category || (issue as PriorityIssueItem).category || (issue as MapMarker).category || 'General';
+  const description = fullData?.description || (issue as PriorityIssueItem).description || (issue as AlertItem).description || 'Civic issue report requiring municipal action.';
+  const severity = fullData?.severity || fullData?.aiAnalysis?.severity || (issue as PriorityIssueItem).severity || (issue as MapMarker).severity || 'Critical';
+  
+  // Real image URL from database image object or Cloudinary url
+  const realImage = fullData?.image?.url || fullData?.imageUrl || (issue as any).imageUrl || (issue as any).image?.url || (typeof (issue as any).image === 'string' ? (issue as any).image : null);
+  const imageUrl = realImage || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=600&q=80';
 
   const handleApplyStatusChange = async () => {
     setShowConfirm(false);
@@ -206,50 +239,52 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issue, onClo
             </p>
           </div>
 
-          {/* Status Workflow Controls */}
-          <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Update Complaint Status</h4>
-            
-            <div className="space-y-2">
-              <label className="block text-xs font-semibold text-slate-700">Select Status:</label>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                disabled={isUpdating}
-                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          {/* Status Workflow Controls (Hidden on Dashboard) */}
+          {!isReadOnly && (
+            <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Update Complaint Status</h4>
+              
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-slate-700">Select Status:</label>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  disabled={isUpdating}
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                >
+                  {VALID_STATUSES.map((st) => (
+                    <option key={st} value={st}>
+                      {st.replace('_', ' ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-700">Status Update Message / Note:</label>
+                <textarea
+                  value={adminMessage}
+                  onChange={(e) => setAdminMessage(e.target.value)}
+                  placeholder="Provide details about repair progress, officer assignment, or resolution..."
+                  rows={2}
+                  disabled={isUpdating}
+                  className="w-full bg-white border border-slate-300 rounded-xl p-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+
+              <button
+                onClick={() => setShowConfirm(true)}
+                disabled={isUpdating || selectedStatus === currentStatus && !adminMessage}
+                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5"
               >
-                {VALID_STATUSES.map((st) => (
-                  <option key={st} value={st}>
-                    {st.replace('_', ' ')}
-                  </option>
-                ))}
-              </select>
+                {isUpdating ? (
+                  <span>Updating...</span>
+                ) : (
+                  <span>Change Status to {selectedStatus.replace('_', ' ')}</span>
+                )}
+              </button>
             </div>
-
-            <div className="space-y-1">
-              <label className="block text-xs font-semibold text-slate-700">Status Update Message / Note:</label>
-              <textarea
-                value={adminMessage}
-                onChange={(e) => setAdminMessage(e.target.value)}
-                placeholder="Provide details about repair progress, officer assignment, or resolution..."
-                rows={2}
-                disabled={isUpdating}
-                className="w-full bg-white border border-slate-300 rounded-xl p-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-            </div>
-
-            <button
-              onClick={() => setShowConfirm(true)}
-              disabled={isUpdating || selectedStatus === currentStatus && !adminMessage}
-              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5"
-            >
-              {isUpdating ? (
-                <span>Updating...</span>
-              ) : (
-                <span>Change Status to {selectedStatus.replace('_', ' ')}</span>
-              )}
-            </button>
-          </div>
+          )}
 
           {/* Timeline History */}
           {statusHistory.length > 0 && (
@@ -275,17 +310,19 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issue, onClo
         {/* Footer Actions */}
         <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setAssigned(!assigned)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors ${
-                assigned 
-                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' 
-                  : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
-              }`}
-            >
-              {assigned ? <CheckCircle2 className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-              {assigned ? 'Assigned to Unit A' : 'Assign Officer'}
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={() => setAssigned(!assigned)}
+                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                  assigned 
+                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' 
+                    : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
+                }`}
+              >
+                {assigned ? <CheckCircle2 className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                {assigned ? 'Assigned to Unit A' : 'Assign Officer'}
+              </button>
+            )}
 
             <button
               onClick={handleDeleteComplaint}

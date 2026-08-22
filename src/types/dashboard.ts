@@ -38,6 +38,11 @@ export interface MapMarker {
   ward: string;
   status: IssueStatus;
   severity: SeverityLevel;
+  isAssigned?: boolean;
+  assignedDepartmentName?: string | null;
+  imageUrl?: string;
+  description?: string;
+  complaintId?: string;
 }
 
 export interface PriorityIssueItem {
