@@ -76,17 +76,6 @@ export const METRICS_DATA: MetricData[] = [
     iconBg: 'bg-rose-100',
     iconColor: 'text-rose-500',
   },
-  {
-    id: 'avg-resolution',
-    title: 'Avg. Resolution Time',
-    value: '2.4 days',
-    change: '0.4 days from last week',
-    isPositive: true, // decrease in resolution time is good
-    type: 'decrease',
-    icon: 'timer',
-    iconBg: 'bg-indigo-100',
-    iconColor: 'text-indigo-600',
-  },
 ];
 
 export const MAP_MARKERS: MapMarker[] = [

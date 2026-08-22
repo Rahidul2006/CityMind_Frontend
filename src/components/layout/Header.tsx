@@ -65,7 +65,12 @@ export const Header: React.FC<HeaderProps> = ({
 
   const headerMeta = getHeaderTitle();
 
-  const isDepartmentOrComplaintsPage = 
+  const isDashboardPage = 
+    location.pathname === '/dashboard' || 
+    location.pathname === '/';
+
+  const isHideRightControls = 
+    isDashboardPage ||
     location.pathname === '/departments' || 
     location.pathname === '/complaints' || 
     location.pathname.startsWith('/department');
@@ -96,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right Action Controls */}
-        {!isDepartmentOrComplaintsPage && (
+        {!isHideRightControls && (
           <div className="flex items-center gap-2.5 sm:gap-3 self-end sm:self-auto">
             {/* Date Picker Button */}
             <div className="relative">
