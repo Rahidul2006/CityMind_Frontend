@@ -62,13 +62,13 @@ export const Analytics: React.FC = () => {
   }, [loadAnalytics]);
 
   const kpis = data?.kpis || {
-    totalIssues: 1284,
-    resolvedIssues: 924,
-    inProgressIssues: 260,
-    pendingIssues: 100,
-    resolutionRate: 72.0,
-    avgResolutionTimeHours: 18.4,
-    slaCompliance: 94.2,
+    totalIssues: 0,
+    resolvedIssues: 0,
+    inProgressIssues: 0,
+    pendingIssues: 0,
+    resolutionRate: 0,
+    avgResolutionTimeHours: 0,
+    slaCompliance: 0,
   };
 
   const volumeTrends = data?.volumeTrends || [];
@@ -181,9 +181,11 @@ export const Analytics: React.FC = () => {
           <div className="mt-3">
             <div className="flex items-baseline justify-between">
               <span className="text-3xl font-bold text-slate-900">{kpis.resolutionRate}%</span>
-              <span className="text-xs font-semibold text-emerald-600 flex items-center gap-0.5">
-                <TrendingUp className="w-3.5 h-3.5" /> +4.2%
-              </span>
+              {kpis.resolutionRate > 0 && (
+                <span className="text-xs font-semibold text-emerald-600 flex items-center gap-0.5">
+                  <TrendingUp className="w-3.5 h-3.5" /> Live DB
+                </span>
+              )}
             </div>
             <div className="w-full bg-slate-100 rounded-full h-2 mt-3 overflow-hidden">
               <div 
@@ -205,7 +207,7 @@ export const Analytics: React.FC = () => {
           <div className="mt-3">
             <span className="text-3xl font-bold text-slate-900">{kpis.avgResolutionTimeHours} hrs</span>
             <p className="text-xs font-medium text-slate-500 mt-2">
-              Faster than 24-hr city SLA target
+              Turnaround velocity
             </p>
           </div>
         </div>
@@ -221,7 +223,7 @@ export const Analytics: React.FC = () => {
           <div className="mt-3">
             <span className="text-3xl font-bold text-slate-900">{kpis.slaCompliance}%</span>
             <p className="text-xs font-semibold text-sky-600 mt-2">
-              Target: 90.0% met
+              Resolved within target
             </p>
           </div>
         </div>
