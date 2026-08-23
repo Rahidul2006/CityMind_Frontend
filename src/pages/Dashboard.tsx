@@ -317,6 +317,8 @@ export function Dashboard() {
   const priorityIssuesList = useMemo<PriorityIssueItem[]>(() => {
     return complaints
       .filter(c => (c.status || '').toUpperCase() !== 'RESOLVED')
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+      .slice(0, 4)
       .map((c, index) => {
         const rawSev = (c.severity || c.aiAnalysis?.severity || 'Medium').toString().toUpperCase();
         const severity: SeverityLevel = 
@@ -337,9 +339,7 @@ export function Dashboard() {
           imageUrl: c.image?.url || c.imageUrl || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=300&q=80',
           description: c.description || ''
         };
-      })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
+      });
   }, [complaints]);
 
   return (
@@ -357,7 +357,7 @@ export function Dashboard() {
       {/* 2. Middle Row 1: Live City Map (OpenStreetMap) & Priority Issues */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         {/* Live City Map (2 Columns wide on desktop) */}
-        <div className="lg:col-span-2 min-h-[440px]">
+        <div className="lg:col-span-2 h-[480px] w-full">
           <LiveCityMap
             markers={mapMarkers}
             onSelectMarker={(marker) => setActiveModalIssue(marker)}
@@ -365,7 +365,7 @@ export function Dashboard() {
         </div>
 
         {/* Priority Issues List (1 Column on desktop) */}
-        <div className="lg:col-span-1 min-h-[440px]">
+        <div className="lg:col-span-1 h-[480px] w-full">
           <PriorityIssues
             issues={priorityIssuesList}
             onSelectIssue={(issue) => setActiveModalIssue(issue)}
