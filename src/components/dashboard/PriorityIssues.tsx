@@ -27,7 +27,7 @@ export const PriorityIssues: React.FC<PriorityIssuesProps> = ({
       </div>
 
       {/* Issue Items List */}
-      <div className="space-y-3 flex-1 overflow-y-auto pr-1">
+      <div className="space-y-3 flex-1 max-h-[250px] overflow-y-auto pr-1">
         {issues.map((issue) => {
           const isCritical = issue.severity === 'Critical';
           const isHigh = issue.severity === 'High';
