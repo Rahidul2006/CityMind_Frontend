@@ -74,7 +74,7 @@ export const DepartmentLogin: React.FC = () => {
                 <input
                   type="email"
                   required
-                  placeholder="road@citymind.com"
+                  placeholder="Enter officer email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all font-medium"

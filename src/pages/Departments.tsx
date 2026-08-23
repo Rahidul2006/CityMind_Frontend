@@ -883,7 +883,7 @@ export const Departments: React.FC = () => {
                           <label className="block font-semibold text-slate-700 mb-1">Officer Email *</label>
                           <input
                             type="email"
-                            placeholder="road@citymind.com"
+                            placeholder="officer@department.gov"
                             value={deptForm.officerEmail}
                             onChange={(e) => setDeptForm({ ...deptForm, officerEmail: e.target.value })}
                             className="w-full bg-white border border-slate-300 rounded-xl p-2 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
