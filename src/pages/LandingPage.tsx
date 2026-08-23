@@ -6,9 +6,7 @@ import {
   ArrowRight,
   Bot,
   Building2,
-  Check,
   CheckCircle2,
-  Copy,
   Eye,
   EyeOff,
   Hexagon,
@@ -29,53 +27,16 @@ interface LandingPageProps {
 type AccountRole = 'admin' | 'officer' | 'citizen';
 type AuthMode = 'login' | 'signup';
 
-type DemoAccount = {
-  roleTitle: string;
-  email: string;
-  pass: string;
-  dept: string;
-  badge: string;
-  role: AccountRole;
-};
-
-const demoAccounts: DemoAccount[] = [
-  {
-    roleTitle: 'City Administrator',
-    email: 'admin@citymind.gov.in',
-    pass: 'admin123',
-    dept: 'Municipal HQ',
-    badge: 'Admin',
-    role: 'admin',
-  },
-  {
-    roleTitle: 'Department Officer',
-    email: 'officer@citymind.gov.in',
-    pass: 'officer123',
-    dept: 'Water Works',
-    badge: 'Ops',
-    role: 'officer',
-  },
-  {
-    roleTitle: 'Auditor',
-    email: 'auditor@citymind.gov.in',
-    pass: 'auditor123',
-    dept: 'Public Oversight',
-    badge: 'Audit',
-    role: 'citizen',
-  },
-];
-
 export const LandingPage: React.FC<LandingPageProps> = ({ initialShowLogin = false }) => {
   const navigate = useNavigate();
   const [showLoginModal, setShowLoginModal] = useState(initialShowLogin);
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('admin@citymind.gov.in');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<AccountRole>('admin');
   const [isLoading, setIsLoading] = useState(false);
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [loginSuccessMsg, setLoginSuccessMsg] = useState(false);
 
   useEffect(() => {
@@ -83,15 +44,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ initialShowLogin = fal
       navigate('/dashboard', { replace: true });
     }
   }, [navigate]);
-
-  const handleFillDemo = (account: DemoAccount, index: number) => {
-    setAuthMode('login');
-    setEmail(account.email);
-    setPassword(account.pass);
-    setRole(account.role);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 1200);
-  };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,7 +126,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ initialShowLogin = fal
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
             <a href="#features" className="hover:text-blue-400 transition-colors">Key Features</a>
-            <a href="#credentials" className="hover:text-blue-400 transition-colors">Demo Logins</a>
             <a href="#analytics" className="hover:text-blue-400 transition-colors">Impact & Stats</a>
           </nav>
 
@@ -213,7 +164,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ initialShowLogin = fal
               </button>
 
               <button onClick={() => navigate('/dashboard')} className="px-6 py-3.5 bg-slate-800/90 hover:bg-slate-800 text-slate-200 hover:text-white font-semibold rounded-xl border border-slate-700 transition-all flex items-center gap-2 text-base">
-                <span>Direct Live Demo</span>
+                <span>Explore Platform</span>
                 <ArrowRight className="w-5 h-5 text-slate-400" />
               </button>
             </div>
@@ -246,8 +197,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ initialShowLogin = fal
                     <p className="text-xs text-slate-400">Municipal Credentials Required</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-semibold tracking-wide uppercase px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  Demo Ready
+                <span className="text-[10px] font-semibold tracking-wide uppercase px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                  Authorized Access
                 </span>
               </div>
 
@@ -279,7 +230,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ initialShowLogin = fal
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      placeholder="admin@citymind.gov.in"
+                      placeholder="Enter your email"
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                     />
                   </div>
@@ -337,76 +288,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ initialShowLogin = fal
                   )}
                 </button>
               </form>
-
-              <div className="mt-5 p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 flex items-center justify-between">
-                <span>Want pre-filled credentials?</span>
-                <button onClick={() => handleFillDemo(demoAccounts[0], 0)} className="text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-2">
-                  Auto-fill Admin
-                </button>
-              </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="credentials" className="relative z-10 py-16 bg-slate-900/50 border-y border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-xs font-bold text-blue-400 uppercase tracking-wider bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
-              Testing & Evaluation
-            </span>
-            <h2 className="text-3xl font-extrabold text-white mt-3">Demo Login Credentials</h2>
-            <p className="text-slate-400 text-sm mt-2">
-              Use any of these preset demo credentials to experience different administrative role perspectives within CityMind.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {demoAccounts.map((acc, index) => (
-              <div key={acc.email} className="bg-[#0f172a] border border-slate-800 hover:border-blue-500/50 rounded-2xl p-6 transition-all duration-200 group flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{acc.dept}</span>
-                    <span className="px-2.5 py-0.5 text-[11px] font-semibold text-blue-300 bg-blue-500/10 border border-blue-500/30 rounded-full">{acc.badge}</span>
-                  </div>
-
-                  <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{acc.roleTitle}</h3>
-
-                  <div className="mt-4 space-y-2 bg-slate-900/90 p-3 rounded-xl border border-slate-800 font-mono text-xs text-slate-300">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-500">Email:</span>
-                      <span className="text-slate-200 font-medium">{acc.email}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-500">Password:</span>
-                      <span className="text-blue-400 font-medium">{acc.pass}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                  <button
-                    onClick={() => {
-                      handleFillDemo(acc, index);
-                      setShowLoginModal(true);
-                    }}
-                    className="w-full py-2.5 bg-slate-800 hover:bg-blue-600 hover:text-white text-slate-200 text-xs font-bold rounded-xl border border-slate-700/80 transition-all flex items-center justify-center gap-2"
-                  >
-                    {copiedIndex === index ? (
-                      <>
-                        <Check className="w-4 h-4 text-emerald-400" />
-                        <span>Filled to Form!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4 text-slate-400 group-hover:text-white" />
-                        <span>Load Credentials & Sign In</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -526,6 +408,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ initialShowLogin = fal
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    placeholder="Enter your email"
                     className="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -540,6 +423,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ initialShowLogin = fal
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    placeholder="••••••••"
                     className="w-full pl-9 pr-10 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-blue-500"
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
@@ -562,13 +446,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ initialShowLogin = fal
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-xs text-slate-400 flex items-center justify-between">
-                <span>Demo Admin Creds</span>
-                <button type="button" onClick={() => { setEmail('admin@citymind.gov.in'); setPassword('admin123'); setRole('admin'); setAuthMode('login'); }} className="text-blue-400 font-semibold hover:underline">
-                  Auto-Fill
-                </button>
               </div>
 
               <button type="submit" disabled={isLoading || loginSuccessMsg} className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
@@ -595,3 +472,4 @@ export const LandingPage: React.FC<LandingPageProps> = ({ initialShowLogin = fal
 };
 
 export default LandingPage;
+
